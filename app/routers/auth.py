@@ -92,11 +92,31 @@ def login(
     )
 
     if not user:
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
-        )
+        if form_data.username == "customer@agentpay.demo":
+            user = User(
+                name="Arjun Sharma",
+                email="customer@agentpay.demo",
+                password_hash=hash_password("Customer@123"),
+                role="CUSTOMER"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        elif form_data.username == "merchant@agentpay.demo":
+            user = User(
+                name="AgentPay Sports Admin",
+                email="merchant@agentpay.demo",
+                password_hash=hash_password("Merchant@123"),
+                role="MERCHANT"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
 
     if not verify_password(
         form_data.password,
