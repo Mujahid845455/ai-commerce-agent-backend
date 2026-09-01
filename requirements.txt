@@ -10,3 +10,4 @@ bcrypt
 python-multipart
 httpx
 email-validator
+razorpay
