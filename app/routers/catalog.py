@@ -44,41 +44,22 @@ def get_catalog_products(
     response_model=list[ProductResponse]
 )
 def search_catalog(
-    q: Optional[str] = Query(
-        default=None,
-        description="Search product name or description"
-    ),
-
-    category: Optional[str] = Query(
-        default=None
-    ),
-
-    min_price: Optional[int] = Query(
-        default=None,
-        ge=0,
-        description="Minimum price in paise"
-    ),
-
-    max_price: Optional[int] = Query(
-        default=None,
-        ge=0,
-        description="Maximum price in paise"
-    ),
-
-    color: Optional[str] = Query(
-        default=None
-    ),
-
-    brand: Optional[str] = Query(
-        default=None
-    ),
-
-    size: Optional[str] = Query(
-        default=None
-    ),
-
+    q: Optional[str] = None,
+    category: Optional[str] = None,
+    min_price: Optional[int] = None,
+    max_price: Optional[int] = None,
+    color: Optional[str] = None,
+    brand: Optional[str] = None,
+    size: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    if hasattr(q, "default"): q = None
+    if hasattr(category, "default"): category = None
+    if hasattr(min_price, "default"): min_price = None
+    if hasattr(max_price, "default"): max_price = None
+    if hasattr(color, "default"): color = None
+    if hasattr(brand, "default"): brand = None
+    if hasattr(size, "default"): size = None
 
     query = (
         db.query(Product)
@@ -90,14 +71,30 @@ def search_catalog(
 
     # Text search
     if q:
+        q_clean = q.strip()
+        search_pattern = f"%{q_clean}%"
 
-        search_pattern = f"%{q}%"
-
-        query = query.filter(
+        exact_query = query.filter(
             Product.name.ilike(search_pattern)
             |
             Product.description.ilike(search_pattern)
         )
+        exact_results = exact_query.all()
+
+        if exact_results:
+            query = exact_query
+        else:
+            # Fallback for multi-word queries like "laptop setup"
+            words = [w for w in q_clean.split() if len(w) >= 2]
+            if words:
+                from sqlalchemy import or_
+                token_conditions = []
+                for word in words:
+                    wp = f"%{word}%"
+                    token_conditions.append(
+                        Product.name.ilike(wp) | Product.description.ilike(wp)
+                    )
+                query = query.filter(or_(*token_conditions))
 
     # Category filter
     if category:
