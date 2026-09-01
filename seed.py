@@ -104,8 +104,10 @@ def seed_database():
             existing_names.add(data["name"])
 
         if new_products:
-            db.bulk_save_objects(new_products)
-            db.flush()
+            batch_size = 100
+            for i in range(0, len(new_products), batch_size):
+                db.add_all(new_products[i:i + batch_size])
+                db.flush()
             print(f"[+] Successfully added {len(new_products)} new products!")
 
         if skipped_count > 0:
