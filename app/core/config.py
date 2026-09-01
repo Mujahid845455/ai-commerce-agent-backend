@@ -3,9 +3,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///./sql_app.db"
 
-    JWT_SECRET: str
+    JWT_SECRET: str = "agentpay-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
 
     RAZORPAY_KEY_ID: str = ""
@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

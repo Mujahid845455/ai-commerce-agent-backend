@@ -31,6 +31,13 @@ Base.metadata.create_all(
     bind=engine
 )
 
+# Auto-seed catalog on startup
+try:
+    from seed import seed_database
+    seed_database()
+except Exception as e:
+    print(f"[*] Startup database seed notice: {e}")
+
 
 app = FastAPI(
     title="AgentPay API",
