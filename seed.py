@@ -104,10 +104,19 @@ def seed_database():
             existing_names.add(data["name"])
 
         if new_products:
-            batch_size = 100
+            batch_size = 50
             for i in range(0, len(new_products), batch_size):
-                db.add_all(new_products[i:i + batch_size])
-                db.flush()
+                chunk = new_products[i:i + batch_size]
+                try:
+                    db.add_all(chunk)
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    for p in chunk:
+                        if isinstance(p.attributes, (dict, list)):
+                            p.attributes = json.dumps(p.attributes)
+                        db.add(p)
+                    db.commit()
             print(f"[+] Successfully added {len(new_products)} new products!")
 
         if skipped_count > 0:
