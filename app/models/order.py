@@ -8,10 +8,9 @@ from sqlalchemy import (
     BigInteger,
     Integer,
     DateTime,
-    ForeignKey
+    ForeignKey,
+    UUID
 )
-
-from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
 

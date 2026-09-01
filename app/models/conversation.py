@@ -1,6 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, DateTime, JSON, UUID
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -23,7 +22,7 @@ class Conversation(Base):
     )
 
     messages = Column(
-        JSONB,
+        JSON,
         default=list,
         nullable=False
     )

@@ -4,10 +4,9 @@ from sqlalchemy import (
     Column,
     String,
     Text,
-    ForeignKey
+    ForeignKey,
+    UUID
 )
-
-from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
 

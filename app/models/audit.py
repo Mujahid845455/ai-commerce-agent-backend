@@ -1,7 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Integer, Text, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, Integer, Text, DateTime, JSON, UUID
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -38,7 +37,7 @@ class AuditLog(Base):
     )
 
     details = Column(
-        JSONB,
+        JSON,
         nullable=True
     )
 

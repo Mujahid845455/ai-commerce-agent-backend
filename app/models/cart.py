@@ -6,10 +6,9 @@ from sqlalchemy import (
     BigInteger,
     String,
     ForeignKey,
-    DateTime
+    DateTime,
+    UUID
 )
-
-from sqlalchemy.dialects.postgresql import UUID
 
 from datetime import datetime
 
