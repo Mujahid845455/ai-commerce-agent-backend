@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.product import Product
 from app.models.audit import AuditLog
+from app.models.order import Order, OrderItem
+from app.models.user import User
 
 from app.schemas.payment import (
     CreateOrderRequest,
@@ -193,6 +195,41 @@ def verify_payment(
                 product.stock_quantity = max(0, product.stock_quantity - qty)
             except Exception:
                 pass
+
+        # Create Order DB records so order appears on Orders page & Analytics
+        try:
+            demo_user = db.query(User).first()
+            user_id = demo_user.id if demo_user else None
+
+            db_order = Order(
+                id=uuid.uuid4(),
+                user_id=user_id,
+                status="CONFIRMED",
+                payment_status="PAID",
+                total_amount_paise=total_amount_paise or 29900,
+                currency="INR",
+                razorpay_order_id=data.razorpay_order_id or f"order_test_{uuid.uuid4().hex[:14]}",
+                razorpay_payment_id=data.razorpay_payment_id or f"pay_test_{uuid.uuid4().hex[:14]}"
+            )
+            db.add(db_order)
+            db.flush()
+
+            if products_to_update:
+                for product, qty in products_to_update:
+                    db_item = OrderItem(
+                        id=uuid.uuid4(),
+                        order_id=db_order.id,
+                        product_id=product.id,
+                        product_name=product.name,
+                        quantity=qty,
+                        unit_price_paise=product.price_paise,
+                        total_price_paise=product.price_paise * qty
+                    )
+                    db.add(db_item)
+            db.commit()
+        except Exception as o_err:
+            print(f"[*] Order DB creation notice: {o_err}")
+            db.rollback()
 
         # Log audit entry
         try:
