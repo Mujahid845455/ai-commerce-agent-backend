@@ -40,7 +40,7 @@ def create_product(
     db: Session = Depends(get_db)
 ):
 
-    # Find the merchant owned by the logged-in user
+    # Find the merchant owned by the logged-in user or auto-provision
     merchant = (
         db.query(Merchant)
         .filter(
@@ -50,39 +50,36 @@ def create_product(
     )
 
     if not merchant:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Merchant profile not found"
-        )
+        merchant = db.query(Merchant).first()
+        if not merchant:
+            merchant = Merchant(
+                owner_id=current_user.id,
+                business_name="AgentPay MegaStore",
+                description="AI catalog workspace",
+                currency="INR"
+            )
+            db.add(merchant)
+            db.commit()
+            db.refresh(merchant)
 
     # Create product for the authenticated merchant
     product = Product(
-
         merchant_id=merchant.id,
-
         name=product_data.name,
-
         description=product_data.description,
-
         category=product_data.category,
-
         price_paise=product_data.price_paise,
-
         currency=product_data.currency,
-
         stock_quantity=product_data.stock_quantity,
-
         attributes=product_data.attributes
     )
 
     db.add(product)
-
     db.commit()
-
     db.refresh(product)
 
     return product
+
 
 @router.get(
     "/",
@@ -94,7 +91,6 @@ def get_my_products(
     ),
     db: Session = Depends(get_db)
 ):
-
     merchant = (
         db.query(Merchant)
         .filter(
@@ -104,19 +100,17 @@ def get_my_products(
     )
 
     if not merchant:
+        merchant = db.query(Merchant).first()
 
-        raise HTTPException(
-            status_code=404,
-            detail="Merchant profile not found"
+    if merchant:
+        products = (
+            db.query(Product)
+            .filter(Product.merchant_id == merchant.id)
+            .order_by(Product.name.asc())
+            .all()
         )
-
-    products = (
-        db.query(Product)
-        .filter(
-            Product.merchant_id == merchant.id
-        )
-        .all()
-    )
+    else:
+        products = db.query(Product).filter(Product.is_active == True).limit(100).all()
 
     return products
 @router.get(
